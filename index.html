@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Quiz Game</title>
+    <script>
+        async function setUserInfo() {
+            const region = document.getElementById('region').value;
+            const ageGroup = document.getElementById('age_group').value;
+            const response = await fetch('/set_user_info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ region: region, age_group: ageGroup })
+            });
+            const data = await response.json();
+            updateDropdowns(data.general_topics);
+        }
+
+        function updateDropdowns(generalTopics) {
+            const topicSelect = document.getElementById('general_topic');
+            topicSelect.innerHTML = '';
+            generalTopics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.text = topic;
+                topicSelect.add(option);
+            });
+            topicSelect.disabled = false;
+        }
+
+        async function setGeneralTopic() {
+            const generalTopic = document.getElementById('general_topic').value;
+            const response = await fetch('/set_general_topic', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ general_topic: generalTopic })
+            });
+            const data = await response.json();
+            updateSubTopics(data.sub_topics);
+        }
+
+        function updateSubTopics(subTopics) {
+            const subTopicSelect = document.getElementById('sub_topic');
+            subTopicSelect.innerHTML = '';
+            subTopics.forEach(subTopic => {
+                const option = document.createElement('option');
+                option.value = subTopic;
+                option.text = subTopic;
+                subTopicSelect.add(option);
+            });
+            subTopicSelect.disabled = false;
+        }
+
+        async function setSubTopic() {
+            const subTopic = document.getElementById('sub_topic').value;
+            const response = await fetch('/set_sub_topic', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sub_topic: subTopic })
+            });
+            const data = await response.json();
+            updateDifficulties(data.difficulties);
+        }
+
+        function updateDifficulties(difficulties) {
+            const difficultySelect = document.getElementById('difficulty');
+            difficultySelect.innerHTML = '';
+            difficulties.forEach(difficulty => {
+                const option = document.createElement('option');
+                option.value = difficulty;
+                option.text = difficulty;
+                difficultySelect.add(option);
+            });
+            difficultySelect.disabled = false;
+        }
+
+        async function startQuiz() {
+            const difficulty = document.getElementById('difficulty').value;
+            const response = await fetch('/start_quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ difficulty: difficulty })
+            });
+            const data = await response.json();
+            document.getElementById('question').innerText = data.question;
+            updateOptions(data.options);
+            document.getElementById('score').innerText = `Score: ${data.score}`;
+        }
+
+        function updateOptions(options) {
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            options.forEach((option, index) => {
+                const optionElement = document.createElement('input');
+                optionElement.type = 'radio';
+                optionElement.name = 'option';
+                optionElement.value = option;
+                optionElement.id = `option${index}`;
+                const label = document.createElement('label');
+                label.htmlFor = `option${index}`;
+                label.innerText = option;
+                optionsContainer.appendChild(optionElement);
+                optionsContainer.appendChild(label);
+                optionsContainer.appendChild(document.createElement('br'));
+            });
+        }
+
+        async function submitAnswer() {
+            const selectedOption = document.querySelector('input[name="option"]:checked').value;
+            const response = await fetch('/submit_answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer: selectedOption })
+            });
+            const data = await response.json();
+            document.getElementById('question').innerText = data.question;
+            updateOptions(data.options);
+            document.getElementById('score').innerText = `Score: ${data.score}`;
+        }
+
+        async function skipQuestion() {
+            const response = await fetch('/skip_question', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            document.getElementById('question').innerText = data.question;
+            updateOptions(data.options);
+            document.getElementById('score').innerText = `Score: ${data.score}`;
+        }
+    </script>
+</head>
+<body>
+    <h1>AI-Powered Quiz Game</h1>
+
+    <div>
+        <h2>Set User Info</h2>
+        <label for="region">Region:</label>
+        <input type="text" id="region">
+        <label for="age_group">Age Group:</label>
+        <input type="text" id="age_group">
+        <button onclick="setUserInfo()">Submit</button>
+    </div>
+
+    <div>
+        <h2>Select Quiz Parameters</h2>
+        <label for="general_topic">General Topic:</label>
+        <select id="general_topic" disabled onchange="setGeneralTopic()"></select>
+        <label for="sub_topic">Sub Topic:</label>
+        <select id="sub_topic" disabled onchange="setSubTopic()"></select>
+        <label for="difficulty">Difficulty:</label>
+        <select id="difficulty" disabled></select>
+        <button onclick="startQuiz()" disabled>Start Quiz</button>
+    </div>
+
+    <div>
+        <h2>Quiz</h2>
+        <p id="question"></p>
+        <div id="options"></div>
+        <button onclick="submitAnswer()">Submit Answer</button>
+        <button onclick="skipQuestion()">Skip Question</button>
+    </div>
+
+    <div>
+        <h2>Score</h2>
+        <p id="score"></p>
+    </div>
+</body>
+</html>
